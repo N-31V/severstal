@@ -1,9 +1,9 @@
 #!/usr/bin/python3
+
 import argparse
 import numpy as np
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
 from other_func import show_mask
 
 
