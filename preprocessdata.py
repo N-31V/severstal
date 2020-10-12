@@ -21,9 +21,8 @@ class SteelDataset(Dataset):
         image_id, mask = make_mask(idx, self.df)
         image_path = os.path.join(self.root, "train_images", image_id)
         img = cv2.imread(image_path)
-        augmented = self.transforms(image=img, mask=mask)
-        img = augmented['image']
-        mask = augmented['mask']  # 1x256x1600x4
+        img = self.transforms(img)
+        mask = self.transforms(mask)  # 1x256x1600x4
         mask = mask[0].permute(2, 0, 1)  # 4x256x1600
         return img, mask
 
@@ -36,13 +35,13 @@ def get_transforms(phase, mean, std):
     if phase == "train":
         list_transforms.extend(
             [
-                transforms.RandomHorizontalFlip(),
+                #transforms.RandomHorizontalFlip(),
             ]
         )
     list_transforms.extend(
         [
-            transforms.Normalize(mean=mean, std=std),
             transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std),            
         ]
     )
     list_trfms = transforms.Compose(list_transforms)
