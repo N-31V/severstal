@@ -2,8 +2,7 @@ import os
 import cv2
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
-from albumentations import (HorizontalFlip, ShiftScaleRotate, Normalize, Resize, Compose, GaussNoise)
-from albumentations.pytorch import ToTensor
+from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from other_func import make_mask
 
@@ -37,16 +36,16 @@ def get_transforms(phase, mean, std):
     if phase == "train":
         list_transforms.extend(
             [
-                HorizontalFlip(p=0.5),  # only horizontal flip as of now
+                transforms.RandomHorizontalFlip(),
             ]
         )
     list_transforms.extend(
         [
-            Normalize(mean=mean, std=std, p=1),
-            ToTensor(),
+            transforms.Normalize(mean=mean, std=std, p=1),
+            transforms.ToTensor(),
         ]
     )
-    list_trfms = Compose(list_transforms)
+    list_trfms = transforms.Compose(list_transforms)
     return list_trfms
 
 
