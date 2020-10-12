@@ -41,7 +41,7 @@ def get_transforms(phase, mean, std):
         )
     list_transforms.extend(
         [
-            transforms.Normalize(mean=mean, std=std, p=1),
+            transforms.Normalize(mean=mean, std=std),
             transforms.ToTensor(),
         ]
     )

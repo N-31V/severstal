@@ -17,6 +17,7 @@ class Trainer(object):
         self.best_loss = float("inf")
         self.phases = ["train", "val"]
         self.device = device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        print(self.device, (torch.cuda.get_device_name(0) if torch.cuda.is_available() else ''))
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
         self.net = model
         self.criterion = torch.nn.BCEWithLogitsLoss()
