@@ -1,6 +1,7 @@
 import os
 import cv2
 import pandas as pd
+import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
@@ -22,8 +23,8 @@ class SteelDataset(Dataset):
         image_path = os.path.join(self.root, "train_images", image_id)
         img = cv2.imread(image_path)
         img = self.transforms(img)
-        mask = self.transforms(mask)  # 1x256x1600x4
-        mask = mask[0].permute(2, 0, 1)  # 4x256x1600
+        mask = torch.from_numpy(mask)  # 1x256x1600x4    
+        mask = mask.permute(2, 0, 1)  # 4x256x1600
         return img, mask
 
     def __len__(self):
@@ -48,7 +49,7 @@ def get_transforms(phase, mean, std):
     return list_trfms
 
 
-def provider(data_folder, df_path, phase, mean=None, std=None, batch_size=8, num_workers=4):
+def provider(data_folder, df_path, phase, mean=None, std=None, batch_size=8, num_workers=8):
     df = pd.read_csv(df_path)
     df['ClassId'] = df['ClassId'].astype(int)
     df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')

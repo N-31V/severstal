@@ -8,13 +8,12 @@ from other_func import Meter, epoch_log
 class Trainer(object):
     """This class takes care of training and validation of our model"""
 
-    def __init__(self, model, data_folder, train_df_path):
-        #torch.multiprocessing.set_start_method('spawn')
-        self.num_workers = 6
-        self.batch_size = {"train": 4, "val": 4}
+    def __init__(self, model, data_folder, train_df_path, num_epochs=20, num_workers=8, batch_size=8):
+        self.num_workers = num_workers
+        self.batch_size = {"train": batch_size, "val": batch_size}
         self.accumulation_steps = 32 // self.batch_size['train']
         self.lr = 5e-4
-        self.num_epochs = 20
+        self.num_epochs = num_epochs
         self.best_loss = float("inf")
         self.phases = ["train", "val"]
         self.device = device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
