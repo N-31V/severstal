@@ -10,7 +10,7 @@ def createParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-e', '--epochs', type=int, default=20, help='int')
     parser.add_argument('-n', '--num_workers', type=int, default=8, help='int')
-    parser.add_argument('-n', '--batch_size', type=int, default=8, help='int')
+    parser.add_argument('-b', '--batch_size', type=int, default=8, help='int')
     return parser
 
 
