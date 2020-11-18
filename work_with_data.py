@@ -19,8 +19,9 @@ class SteelDataset(Dataset):
         ])
         self.names = os.listdir(data_folder)
 
-    def __getitem__(self, image_id):
-        mask = get_mask(image_id, self.df) if self.df is None else torch.zeros(256, 1600, 4)
+    def __getitem__(self, row_id):
+        image_id = self.df.index[row_id]
+        mask = np.zeros((256, 1600, 4), dtype=np.float32) if self.df is None else get_mask(self.df, image_id)
         image_path = os.path.join(self.root, image_id)
         img = cv2.imread(image_path)
         img = self.transforms(img)
@@ -32,19 +33,24 @@ class SteelDataset(Dataset):
         return len(self.names)
 
 
-def train_val_dataloader(data_folder, df_path, phase, batch_size=8, num_workers=8):
+def train_val_dataloader(data_folder, df_path, batch_size=8, num_workers=8):
     df = get_reformated_train_df(df_path)
     train_df, val_df = train_test_split(df, test_size=0.2, stratify=df["defects"])
-    df = train_df if phase == "train" else val_df
-    dataset = SteelDataset(data_folder, df)
-    dataloader = DataLoader(
-        dataset,
+    train_dataloader = DataLoader(
+        SteelDataset(data_folder, train_df),
         batch_size=batch_size,
         num_workers=num_workers,
         pin_memory=True,
         shuffle=True,
     )
-    return dataloader
+    val_dataloader = DataLoader(
+        SteelDataset(data_folder, val_df),
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        shuffle=True,
+    )
+    return {'train': train_dataloader, 'val': val_dataloader}
 
 
 def get_reformated_train_df(df_path):

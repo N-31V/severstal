@@ -37,16 +37,12 @@ class ModelToolkit:
         self.losses = {phase: [] for phase in ["train", "val"]}
         self.scores = {phase: Meter() for phase in ["train", "val"]}
         torch.backends.cudnn.benchmark = True
-        self.dataloaders = {
-            phase: train_val_dataloader(
-                data_folder="./input/train_images",
-                df_path="./input/train.csv",
-                phase=phase,
-                batch_size=self.batch_size,
-                num_workers=self.num_workers,
-            )
-            for phase in ["train", "val"]
-        }
+        self.dataloaders = train_val_dataloader(
+            data_folder="./input/train_images",
+            df_path="./input/train.csv",
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
         self.test_dataloader = DataLoader(
             SteelDataset("./input/test_images"),
             batch_size=self.batch_size,
