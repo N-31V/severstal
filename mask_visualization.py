@@ -7,6 +7,8 @@ from work_with_data import get_reformated_train_df, extend_train_df, show_mask
 
 def create_parser():
     argparser = argparse.ArgumentParser()
+    argparser.add_argument('--df', required=True, type=str, help='df path')
+    argparser.add_argument('-i', '--imgfolder', required=True, type=str, help='images folder')
     argparser.add_argument('-t', '--type', type=int, default=0, help='int: [1..4]')
     argparser.add_argument('-n', '--number', type=int, default=5, help='number of displayed images')
     return argparser
@@ -15,10 +17,10 @@ def create_parser():
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
-    train_df = get_reformated_train_df('./input/train.csv')
-    defects_num = len(train_df)
-    train_df = extend_train_df(train_df, './input/train_images')
+    train_df = get_reformated_train_df(args.df)
+    train_df = extend_train_df(train_df, args.imgfolder)
     img_num = len(train_df)
+    defects_num = sum(train_df['defects'] > 0)
 
     print('the number of images with no defects: {}'.format(img_num - defects_num))
     print('the number of images with defects: {}'.format(defects_num))

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from work_with_data import train_val_dataloader, SteelDataset
+from work_with_data import train_val_dataloader, SteelDataset, extend_train_df
 
 
 def load_model(name):

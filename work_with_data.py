@@ -11,17 +11,21 @@ from torchvision import transforms
 
 class SteelDataset(Dataset):
     def __init__(self, data_folder, df=None):
+        if df is None:
+            idx = os.listdir(data_folder)
+            df = pd.DataFrame([[np.nan, np.nan, np.nan, np.nan, 0] for _ in range(len(idx))], index=idx,
+                                  columns=[1, 2, 3, 4, 'defects'])
         self.df = df
         self.root = data_folder
         self.transforms = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         ])
-        self.names = os.listdir(data_folder) if self.df is None else self.df.index.tolist()
+        self.names = self.df.index.tolist()
 
     def __getitem__(self, row_id):
         image_id = self.df.index[row_id]
-        mask = np.zeros((256, 1600, 4), dtype=np.float32) if self.df is None else get_mask(self.df, image_id)
+        mask = get_mask(self.df, image_id)
         image_path = os.path.join(self.root, image_id)
         img = cv2.imread(image_path)
         img = self.transforms(img)
@@ -74,7 +78,7 @@ def get_mask(df, image_id, dtype=np.float32):
     labels = df.loc[image_id][:4]
     masks = np.zeros((256, 1600, 4), dtype=dtype)
     for idx, label in enumerate(labels.values):
-        if label is not np.nan:
+        if not np.isnan(label):
             label = label.split(' ')
             positions = map(int, label[0::2])
             length = map(int, label[1::2])
@@ -118,3 +122,17 @@ def mask_to_output(img):
     runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
     runs[1::2] -= runs[::2]
     return ''.join(str(x) for x in runs)
+
+
+def output_to_df(imges_id, predictions):
+    concat_list = []
+    for img, pred in zip(imges_id, predictions):
+        pred = pmask_to_binary(pred)
+        for i in range(4):
+            if pred[i].sum() > 0:
+                concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i], index=['ImageID', 'EncodedPixels', 'ClassId']))
+    df = pd.concat(concat_list, axis=1).T
+    df.set_index('ImageID', inplace=True)
+    return df
+
+
