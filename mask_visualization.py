@@ -2,26 +2,28 @@
 
 import argparse
 import numpy as np
-import os
-from work_with_data import get_reformated_train_df, show_mask
+from work_with_data import get_reformated_train_df, extend_train_df, show_mask
 
 
-def createParser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--type', type=int, default=0, help='int: [1..4]')
-    return parser
+def create_parser():
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-t', '--type', type=int, default=0, help='int: [1..4]')
+    argparser.add_argument('-n', '--number', type=int, default=5, help='number of displayed images')
+    return argparser
 
 
 if __name__ == '__main__':
-    parser = createParser()
+    parser = create_parser()
     args = parser.parse_args()
-    train_df = get_reformated_train_df("./input/train.csv")
-    img_num = len(os.listdir("./input/train_images"))
+    train_df = get_reformated_train_df('./input/train.csv')
     defects_num = len(train_df)
-    print("the number of images with no defects: {}".format(img_num - defects_num))
-    print("the number of images with defects: {}".format(defects_num))
+    train_df = extend_train_df(train_df, './input/train_images')
+    img_num = len(train_df)
+
+    print('the number of images with no defects: {}'.format(img_num - defects_num))
+    print('the number of images with defects: {}'.format(defects_num))
     if 0 < args.type < 5:
         train_df = train_df[train_df[args.type].notna()]
     images_id = train_df.index
-    for image_id in np.random.choice(images_id, 5, replace=False):
+    for image_id in np.random.choice(images_id, args.number, replace=False):
         show_mask(train_df, './input/train_images/', image_id)

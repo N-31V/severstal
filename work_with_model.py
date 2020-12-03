@@ -23,28 +23,32 @@ class ModelToolkit:
         self.batch_size = batch_size
         self.lr = 5e-4
 
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        print(self.device, (torch.cuda.get_device_name(0) if torch.cuda.is_available() else ''))
-        torch.set_default_tensor_type("torch.cuda.FloatTensor")
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda:0')
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+            print(self.device, torch.cuda.get_device_name(0))
+        else:
+            self.device = torch.device('cpu')
+            print(self.device)
         self.model = model.to(self.device)
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", patience=3,
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', patience=3,
                                                                     verbose=True)
         self.epoch = 0
-        self.best_loss = float("inf")
-        self.losses = {phase: [] for phase in ["train", "val"]}
-        self.scores = {phase: Meter() for phase in ["train", "val"]}
+        self.best_loss = float('inf')
+        self.losses = {phase: [] for phase in ['train', 'val']}
+        self.scores = {phase: Meter() for phase in ['train', 'val']}
         torch.backends.cudnn.benchmark = True
         self.dataloaders = train_val_dataloader(
-            data_folder="./input/train_images",
-            df_path="./input/train.csv",
+            data_folder='./input/train_images',
+            df_path='./input/train.csv',
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
         self.test_dataloader = DataLoader(
-            SteelDataset("./input/test_images"),
+            SteelDataset('./input/test_images'),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=True,
@@ -61,12 +65,12 @@ class ModelToolkit:
     def train(self, num_epochs):
         for epoch in range(num_epochs):
             self.epoch += 1
-            self.run_epoch("train")
+            self.run_epoch('train')
             with torch.no_grad():
-                val_loss = self.run_epoch("val")
+                val_loss = self.run_epoch('val')
                 self.scheduler.step(val_loss)
             if val_loss < self.best_loss:
-                print("******** New optimal found, saving state ********")
+                print('******** New optimal found, saving state ********')
                 self.save_model()
             print()
         self.plot_scores()
@@ -91,9 +95,9 @@ class ModelToolkit:
 
     def run_epoch(self, phase):
         meter = Meter()
-        start = time.strftime("%H:%M:%S")
-        print(f"Starting epoch: {self.epoch} | phase: {phase} | ⏰: {start}")
-        self.model.train(phase == "train")
+        start = time.strftime('%H:%M:%S')
+        print(f'Starting epoch: {self.epoch} | phase: {phase} | ⏰: {start}')
+        self.model.train(phase == 'train')
         dataloader = self.dataloaders[phase]
         running_loss = 0.0
         total_batches = len(dataloader)
@@ -102,7 +106,7 @@ class ModelToolkit:
         for itr, batch in enumerate(tk0):
             images, targets, images_id = batch
             loss, outputs = self.forward(images, targets)
-            if phase == "train":
+            if phase == 'train':
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -111,9 +115,9 @@ class ModelToolkit:
             meter.metrics(torch.sigmoid(outputs), targets)
             tk0.set_postfix(loss=(running_loss / (itr + 1)))
         epoch_loss = running_loss / total_batches
-        """logging the metrics at the end of an epoch"""
+        '''logging the metrics at the end of an epoch'''
         dice, iou, dice_pos, iou_pos, neg = meter.get_mean_metrics()
-        print("Loss: %0.4f | dice: %0.4f | IoU: %0.4f  | dice_pos: %0.4f | IoU_pos: %0.4f | dice&IoU_neg: %0.4f" % (
+        print('Loss: %0.4f | dice: %0.4f | IoU: %0.4f  | dice_pos: %0.4f | IoU_pos: %0.4f | dice&IoU_neg: %0.4f' % (
             epoch_loss, dice, iou, dice_pos, iou_pos, neg))
         self.scores[phase].append_metrics(dice, iou, dice_pos, iou_pos, neg)
         self.losses.append(epoch_loss)

@@ -17,7 +17,7 @@ class SteelDataset(Dataset):
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         ])
-        self.names = os.listdir(data_folder)
+        self.names = os.listdir(data_folder) if self.df is None else self.df.index.tolist()
 
     def __getitem__(self, row_id):
         image_id = self.df.index[row_id]
@@ -35,7 +35,7 @@ class SteelDataset(Dataset):
 
 def train_val_dataloader(data_folder, df_path, batch_size=8, num_workers=8):
     df = get_reformated_train_df(df_path)
-    train_df, val_df = train_test_split(df, test_size=0.2, stratify=df["defects"])
+    train_df, val_df = train_test_split(df, test_size=0.2, stratify=df['defects'])
     train_dataloader = DataLoader(
         SteelDataset(data_folder, train_df),
         batch_size=batch_size,
@@ -61,12 +61,21 @@ def get_reformated_train_df(df_path):
     return df
 
 
+def extend_train_df(df, data_folder):
+    all_idx = os.listdir(data_folder)
+    current_idx = df.index.tolist()
+    new_idx = list(set(all_idx)-set(current_idx))
+    new_df = pd.DataFrame([[np.nan, np.nan, np.nan, np.nan, 0] for _ in range(len(new_idx))], index=new_idx, columns=df.columns)
+    df = pd.concat([df, new_df], axis=0)
+    return df
+
+
 def get_mask(df, image_id, dtype=np.float32):
     labels = df.loc[image_id][:4]
     masks = np.zeros((256, 1600, 4), dtype=dtype)
     for idx, label in enumerate(labels.values):
         if label is not np.nan:
-            label = label.split(" ")
+            label = label.split(' ')
             positions = map(int, label[0::2])
             length = map(int, label[1::2])
             mask = np.zeros(256 * 1600, dtype=dtype)
@@ -92,10 +101,10 @@ def show_mask(df, path, image_id):
     plt.show()
 
 
-def pmask_to_binary(X, threshold):
-    """X is sigmoid output of the model"""
-    X_p = np.copy(X)
-    masks = (X_p > threshold).astype('uint8')
+def pmask_to_binary(out, threshold):
+    """out is sigmoid output of the model"""
+    out_b = np.copy(out)
+    masks = (out_b > threshold).astype('uint8')
     return masks
 
 
