@@ -13,8 +13,7 @@ class SteelDataset(Dataset):
     def __init__(self, data_folder, df=None):
         if df is None:
             idx = os.listdir(data_folder)
-            df = pd.DataFrame([[np.nan, np.nan, np.nan, np.nan, 0] for _ in range(len(idx))], index=idx,
-                                  columns=[1, 2, 3, 4, 'defects'])
+            df = pd.DataFrame(index=idx, columns=[1, 2, 3, 4])
         self.df = df
         self.root = data_folder
         self.transforms = transforms.Compose([
@@ -38,7 +37,7 @@ class SteelDataset(Dataset):
 
 
 def train_val_dataloader(data_folder, df_path, batch_size=8, num_workers=8):
-    df = get_reformated_train_df(df_path)
+    df = get_reformated_df(df_path)
     train_df, val_df = train_test_split(df, test_size=0.2, stratify=df['defects'])
     train_dataloader = DataLoader(
         SteelDataset(data_folder, train_df),
@@ -57,7 +56,7 @@ def train_val_dataloader(data_folder, df_path, batch_size=8, num_workers=8):
     return {'train': train_dataloader, 'val': val_dataloader}
 
 
-def get_reformated_train_df(df_path):
+def get_reformated_df(df_path):
     df = pd.read_csv(df_path)
     df['ClassId'] = df['ClassId'].astype(int)
     df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
@@ -65,11 +64,12 @@ def get_reformated_train_df(df_path):
     return df
 
 
-def extend_train_df(df, data_folder):
+def extend_df(df, data_folder):
     all_idx = os.listdir(data_folder)
     current_idx = df.index.tolist()
     new_idx = list(set(all_idx)-set(current_idx))
-    new_df = pd.DataFrame([[np.nan, np.nan, np.nan, np.nan, 0] for _ in range(len(new_idx))], index=new_idx, columns=df.columns)
+    new_df = pd.DataFrame(index=new_idx, columns=[1, 2, 3, 4])
+    new_df['defects'] = new_df.count(axis=1)
     df = pd.concat([df, new_df], axis=0)
     return df
 
@@ -78,7 +78,7 @@ def get_mask(df, image_id, dtype=np.float32):
     labels = df.loc[image_id][:4]
     masks = np.zeros((256, 1600, 4), dtype=dtype)
     for idx, label in enumerate(labels.values):
-        if not np.isnan(label):
+        if label is not np.nan:
             label = label.split(' ')
             positions = map(int, label[0::2])
             length = map(int, label[1::2])
@@ -105,7 +105,7 @@ def show_mask(df, path, image_id):
     plt.show()
 
 
-def pmask_to_binary(out, threshold):
+def pmask_to_binary(out, threshold=0.5):
     """out is sigmoid output of the model"""
     out_b = np.copy(out)
     masks = (out_b > threshold).astype('uint8')
@@ -121,7 +121,7 @@ def mask_to_output(img):
     pixels = np.concatenate([[0], pixels, [0]])
     runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
     runs[1::2] -= runs[::2]
-    return ''.join(str(x) for x in runs)
+    return ' '.join(str(x) for x in runs)
 
 
 def output_to_df(imges_id, predictions):
@@ -130,9 +130,9 @@ def output_to_df(imges_id, predictions):
         pred = pmask_to_binary(pred)
         for i in range(4):
             if pred[i].sum() > 0:
-                concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i], index=['ImageID', 'EncodedPixels', 'ClassId']))
+                concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i], index=['ImageId', 'EncodedPixels', 'ClassId']))
     df = pd.concat(concat_list, axis=1).T
-    df.set_index('ImageID', inplace=True)
+    df.set_index('ImageId', inplace=True)
     return df
 
 
