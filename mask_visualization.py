@@ -2,7 +2,7 @@
 
 import argparse
 import numpy as np
-from work_with_data import get_reformated_train_df, extend_train_df, show_mask
+from work_with_data import get_reformated_df, extend_df, show_mask
 
 
 def create_parser():
@@ -17,8 +17,8 @@ def create_parser():
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
-    train_df = get_reformated_train_df(args.df)
-    train_df = extend_train_df(train_df, args.imgfolder)
+    train_df = get_reformated_df(args.df)
+    train_df = extend_df(train_df, args.imgfolder)
     img_num = len(train_df)
     defects_num = sum(train_df['defects'] > 0)
 
@@ -28,4 +28,4 @@ if __name__ == '__main__':
         train_df = train_df[train_df[args.type].notna()]
     images_id = train_df.index
     for image_id in np.random.choice(images_id, args.number, replace=False):
-        show_mask(train_df, './input/train_images/', image_id)
+        show_mask(train_df, args.imgfolder, image_id)
