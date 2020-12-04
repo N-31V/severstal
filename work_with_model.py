@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from work_with_data import train_val_dataloader, SteelDataset, extend_train_df
+from work_with_data import train_val_dataloader, SteelDataset
 
 
 def load_model(name):
@@ -47,13 +47,6 @@ class ModelToolkit:
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
-        self.test_dataloader = DataLoader(
-            SteelDataset('./input/test_images'),
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            shuffle=False,
-        )
 
     def forward(self, images, targets):
         images = images.to(self.device)
@@ -75,16 +68,24 @@ class ModelToolkit:
             print()
         self.plot_scores()
 
-    def predict(self):
+    def predict(self, path='./input/test_images'):
+        dataloader = DataLoader(
+            SteelDataset(path),
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            shuffle=False,
+        )
         self.model.eval()
         test_predictions = []
         test_images_id = []
-        for images, targets, images_id in tqdm(self.test_dataloader):
+        for images, targets, images_id in tqdm(dataloader):
             images = images.to(self.device)
             with torch.no_grad():
                 outputs = self.model(images)
             test_predictions.extend(torch.sigmoid(outputs).data.cpu().numpy())
             test_images_id.extend(images_id)
+            torch.cuda.empty_cache()
         return test_images_id, test_predictions
 
     def save_model(self):
