@@ -37,7 +37,7 @@ class SteelDataset(Dataset):
 
 
 def train_val_dataloader(data_folder, df_path, batch_size=8, num_workers=8):
-    df = get_reformated_df(df_path)
+    df = extend_df(get_reformated_df(df_path), data_folder)
     train_df, val_df = train_test_split(df, test_size=0.2, stratify=df['defects'])
     train_dataloader = DataLoader(
         SteelDataset(data_folder, train_df),
