@@ -197,7 +197,7 @@ class Meter:
 
             neg = (p.float().sum(-1) == 0).float()
             dice_pos = 2 * (p & t).sum(-1) / ((p.float() + t.float()).sum(-1))
-            iou_pos = (p & t).sum(-1) / ((p | t).sum(-1))
+            iou_pos = (p & t).sum(-1).float() / ((p | t).sum(-1))
 
             self.dice_scores.extend(np.vstack((neg[neg_index], dice_pos[pos_index])).tolist())
             self.dice_pos_scores.extend(dice_pos[pos_index].tolist())
