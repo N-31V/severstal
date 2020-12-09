@@ -8,8 +8,8 @@ from torch.utils.data import DataLoader
 from work_with_data import train_val_dataloader, SteelDataset
 
 
-def load_model(name):
-    with open('models/' + name + '.pickle', 'rb') as f:
+def load_model(model):
+    with open(model, 'rb') as f:
         model = pickle.load(f)
     return model
 
@@ -63,6 +63,7 @@ class ModelToolkit:
                 val_loss = self.run_epoch('val')
                 self.scheduler.step(val_loss)
             if val_loss < self.best_loss:
+                self.best_loss = val_loss
                 print('******** New optimal found, saving state ********')
                 self.save_model()
             print()
@@ -121,7 +122,7 @@ class ModelToolkit:
         print('Loss: %0.4f | dice: %0.4f | IoU: %0.4f  | dice_pos: %0.4f | IoU_pos: %0.4f | dice&IoU_neg: %0.4f' % (
             epoch_loss, dice, iou, dice_pos, iou_pos, neg))
         self.scores[phase].append_metrics(dice, iou, dice_pos, iou_pos, neg)
-        self.losses.append(epoch_loss)
+        self.losses[phase].append(epoch_loss)
         torch.cuda.empty_cache()
         return epoch_loss
 

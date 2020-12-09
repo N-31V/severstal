@@ -8,8 +8,8 @@ from work_with_model import ModelToolkit
 def create_parser():
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-e', '--epochs', type=int, default=20, help='int')
-    argparser.add_argument('-n', '--num_workers', type=int, default=8, help='int')
-    argparser.add_argument('-b', '--batch_size', type=int, default=8, help='int')
+    argparser.add_argument('-n', '--num_workers', type=int, default=4, help='int')
+    argparser.add_argument('-b', '--batch_size', type=int, default=4, help='int')
     return argparser
 
 
