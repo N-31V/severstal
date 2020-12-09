@@ -16,7 +16,7 @@ def load_model(model):
 
 class ModelToolkit:
 
-    def __init__(self, model, name, num_workers=8, batch_size=8):
+    def __init__(self, model, name, num_workers, batch_size):
         self.model = model
         self.name = name
         self.num_workers = num_workers
@@ -131,8 +131,8 @@ class ModelToolkit:
         plt.figure(figsize=(15, 5))
         plt.subplot(2, 3, pl)
         self.plot_score(self.losses['train'], self.losses['val'], 'loss')
-        for train, val, name in zip(self.scores['train'], self.scores['val'],
-                                    ['dice', 'iou', 'dice_pos', 'iou_pos', 'neg']):
+        for _, train, val, name in zip(enumerate(self.scores['train'], self.scores['val'],
+                                                 ['dice', 'iou', 'dice_pos', 'iou_pos', 'neg'])):
             pl += 1
             plt.subplot(2, 3, pl)
             self.plot_score(train, val, name)
