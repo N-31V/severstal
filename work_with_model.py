@@ -70,11 +70,11 @@ class ModelToolkit:
             print()
         self.plot_scores()
 
-    def predict(self, path='./input/test_images'):
+    def predict(self, batch_size, num_workers, path='./input/test_images'):
         dataloader = DataLoader(
             SteelDataset(path),
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
+            batch_size=batch_size,
+            num_workers=num_workers,
             pin_memory=True,
             shuffle=False,
         )
