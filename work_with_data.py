@@ -124,15 +124,4 @@ def mask_to_output(img):
     return ' '.join(str(x) for x in runs)
 
 
-def output_to_df(imges_id, predictions):
-    concat_list = []
-    for img, pred in zip(imges_id, predictions):
-        pred = pmask_to_binary(pred)
-        for i in range(4):
-            if pred[i].sum() > 0:
-                concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i], index=['ImageId', 'EncodedPixels', 'ClassId']))
-    df = pd.concat(concat_list, axis=1).T
-    df.set_index('ImageId', inplace=True)
-    return df
-
 

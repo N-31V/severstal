@@ -2,10 +2,11 @@ import torch
 import pickle
 import time
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from work_with_data import train_val_dataloader, SteelDataset
+from work_with_data import train_val_dataloader, SteelDataset, pmask_to_binary, mask_to_output
 
 
 def load_model(model):
@@ -78,16 +79,21 @@ class ModelToolkit:
             shuffle=False,
         )
         self.model.eval()
-        test_predictions = []
-        test_images_id = []
+        concat_list = []
         for images, targets, images_id in tqdm(dataloader):
             images = images.to(self.device)
             with torch.no_grad():
                 outputs = self.model(images)
-            test_predictions.extend(torch.sigmoid(outputs).data.cpu().numpy())
-            test_images_id.extend(images_id)
+            predictions = pmask_to_binary(torch.sigmoid(outputs).data.cpu().numpy())
             torch.cuda.empty_cache()
-        return test_images_id, test_predictions
+            for img, pred in zip(images_id, predictions):
+                for i in range(4):
+                    if pred[i].sum() > 0:
+                        concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i],
+                                                     index=['ImageId', 'EncodedPixels', 'ClassId']))
+        df = pd.concat(concat_list, axis=1).T
+        df.set_index('ImageId', inplace=True)
+        return df
 
     def save_model(self):
         file_name = 'models/{}-{}-{:.4f}.pickle'.format(self.name, self.epoch, self.best_loss)
