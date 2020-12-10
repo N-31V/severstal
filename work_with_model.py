@@ -96,7 +96,7 @@ class ModelToolkit:
         return df
 
     def save_model(self):
-        file_name = 'output/models/{}-epoch:{}-loss:{:.4f}.pickle'.format(self.name, self.epoch, self.best_loss)
+        file_name = 'output/models/{}-{}-{:.4f}.pickle'.format(self.name, self.epoch, self.best_loss)
         print('saving model with name: "{}"'.format(file_name))
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
@@ -134,25 +134,24 @@ class ModelToolkit:
 
     def plot_scores(self):
         pl = 1
-        plt.figure(figsize=(15, 5))
+        plt.figure(figsize=(30, 20))
         plt.subplot(2, 3, pl)
         self.plot_score(self.losses['train'], self.losses['val'], 'loss')
-        for _, train, val, name in zip(self.scores['train'].get_metrics(), self.scores['val'].get_metrics(),
+        for train, val, name in zip(self.scores['train'].get_metrics(), self.scores['val'].get_metrics(),
                                        ['dice', 'iou', 'dice_pos', 'iou_pos', 'neg']):
             pl += 1
             plt.subplot(2, 3, pl)
             self.plot_score(train, val, name)
+        plt.show()
 
     @staticmethod
     def plot_score(train, val, name):
-        plt.figure(figsize=(15, 5))
         plt.plot(train, label=f'train {name}')
         plt.plot(val, label=f'val {name}')
         plt.title(f'{name} plot')
         plt.xlabel('Epoch')
         plt.ylabel(f'{name}')
         plt.legend()
-        plt.show()
 
 
 class Meter:

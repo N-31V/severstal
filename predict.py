@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
-from work_with_model import ModelToolkit, load_model
+from work_with_model import load_model
 
 
 def create_parser():
