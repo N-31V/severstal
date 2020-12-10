@@ -137,8 +137,8 @@ class ModelToolkit:
         plt.figure(figsize=(15, 5))
         plt.subplot(2, 3, pl)
         self.plot_score(self.losses['train'], self.losses['val'], 'loss')
-        for _, train, val, name in zip(enumerate(self.scores['train'], self.scores['val'],
-                                                 ['dice', 'iou', 'dice_pos', 'iou_pos', 'neg'])):
+        for _, train, val, name in zip(self.scores['train'].get_metrics(), self.scores['val'].get_metrics(),
+                                       ['dice', 'iou', 'dice_pos', 'iou_pos', 'neg']):
             pl += 1
             plt.subplot(2, 3, pl)
             self.plot_score(train, val, name)
@@ -185,7 +185,7 @@ class Meter:
         dice_pos = self.dice_pos_scores
         iou_pos = self.iou_pos_scores
         neg = self.neg_scores
-        return dice, iou, dice_pos, iou_pos, neg
+        return [dice, iou, dice_pos, iou_pos, neg]
 
     def metrics(self, probability, truth):
         """Calculates dice and iou of positive and negative images seperately"""
