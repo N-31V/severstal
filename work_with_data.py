@@ -60,6 +60,7 @@ def get_reformated_df(df_path):
     df = pd.read_csv(df_path)
     df['ClassId'] = df['ClassId'].astype(int)
     df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
+    df = df.reindex(columns=[1, 2, 3, 4])
     df['defects'] = df.count(axis=1)
     return df
 
