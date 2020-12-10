@@ -2,6 +2,7 @@
 
 import argparse
 import segmentation_models_pytorch as smp
+from datetime import datetime
 from work_with_model import ModelToolkit, load_model
 
 
@@ -19,7 +20,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.model is None:
         model = smp.Unet('resnet18', encoder_weights='imagenet', classes=4, activation=None)
-        model = ModelToolkit(model, 'Unet', num_workers=args.num_workers, batch_size=args.batch_size)
+        model = ModelToolkit(model, 'Unet(ResNet18)-created:' + datetime.today().strftime("%d-%m-%Y"),
+                             num_workers=args.num_workers, batch_size=args.batch_size)
     else:
         model = load_model(args.model)
     model.train(args.epochs)

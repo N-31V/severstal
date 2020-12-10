@@ -89,14 +89,14 @@ class ModelToolkit:
             for img, pred in zip(images_id, predictions):
                 for i in range(4):
                     if pred[i].sum() > 0:
-                        concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i],
+                        concat_list.append(pd.Series(data=[img, mask_to_output(pred[i]), i + 1],
                                                      index=['ImageId', 'EncodedPixels', 'ClassId']))
         df = pd.concat(concat_list, axis=1).T
         df.set_index('ImageId', inplace=True)
         return df
 
     def save_model(self):
-        file_name = 'models/{}-{}-{:.4f}.pickle'.format(self.name, self.epoch, self.best_loss)
+        file_name = 'output/models/{}-epoch:{}-loss:{:.4f}.pickle'.format(self.name, self.epoch, self.best_loss)
         print('saving model with name: "{}"'.format(file_name))
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)

@@ -17,5 +17,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     model = load_model(args.model)
     pred_df = model.predict(args.batch_size, args.num_workers)
-    pred_df.to_csv('test.csv')
-
+    pred_df.to_csv('output/predictions/{}.csv'.format(model.name))
