@@ -12,26 +12,18 @@ from work_with_data import train_val_dataloader, SteelDataset, pmask_to_binary, 
 def load_model(model):
     with open(model, 'rb') as f:
         model = pickle.load(f)
+        model.set_device()
     return model
 
 
 class ModelToolkit:
 
-    def __init__(self, model, name, num_workers, batch_size):
+    def __init__(self, model, name):
         self.model = model
         self.name = name
-        self.num_workers = num_workers
-        self.batch_size = batch_size
         self.lr = 5e-4
-
-        if torch.cuda.is_available():
-            self.device = torch.device('cuda:0')
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
-            print(self.device, torch.cuda.get_device_name(0))
-        else:
-            self.device = torch.device('cpu')
-            print(self.device)
-        self.model = model.to(self.device)
+        self.model = model
+        self.set_device()
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
@@ -42,12 +34,16 @@ class ModelToolkit:
         self.losses = {phase: [] for phase in ['train', 'val']}
         self.scores = {phase: Meter() for phase in ['train', 'val']}
         torch.backends.cudnn.benchmark = True
-        self.dataloaders = train_val_dataloader(
-            data_folder='./input/train_images',
-            df_path='./input/train.csv',
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-        )
+
+    def set_device(self):
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda:0')
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+            print(self.device, torch.cuda.get_device_name(0))
+        else:
+            self.device = torch.device('cpu')
+            print(self.device)
+        self.model = self.model.to(self.device)
 
     def forward(self, images, targets):
         images = images.to(self.device)
@@ -56,12 +52,18 @@ class ModelToolkit:
         loss = self.criterion(outputs, masks)
         return loss, outputs
 
-    def train(self, num_epochs):
+    def train(self, num_epochs, batch_size, num_workers, ):
+        dataloaders = train_val_dataloader(
+            data_folder='./input/train_images',
+            df_path='./input/train.csv',
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
         for epoch in range(num_epochs):
             self.epoch += 1
-            self.run_epoch('train')
+            self.run_epoch('train', dataloaders['train'])
             with torch.no_grad():
-                val_loss = self.run_epoch('val')
+                val_loss = self.run_epoch('val', dataloaders['val'])
                 self.scheduler.step(val_loss)
             if val_loss < self.best_loss:
                 self.best_loss = val_loss
@@ -69,6 +71,36 @@ class ModelToolkit:
                 self.save_model()
             print()
         self.plot_scores()
+
+    def run_epoch(self, phase, dataloader):
+        meter = Meter()
+        start = time.strftime('%H:%M:%S')
+        print(f'Starting epoch: {self.epoch} | phase: {phase} | ⏰: {start}')
+        self.model.train(phase == 'train')
+        running_loss = 0.0
+        total_batches = len(dataloader)
+        tk0 = tqdm(dataloader, total=total_batches)
+        self.optimizer.zero_grad()
+        for itr, batch in enumerate(tk0):
+            images, targets, images_id = batch
+            loss, outputs = self.forward(images, targets)
+            if phase == 'train':
+                loss.backward()
+                self.optimizer.step()
+                self.optimizer.zero_grad()
+            running_loss += loss.item()
+            outputs = outputs.detach().cpu()
+            meter.metrics(torch.sigmoid(outputs), targets)
+            tk0.set_postfix(loss=(running_loss / (itr + 1)))
+        epoch_loss = running_loss / total_batches
+        '''logging the metrics at the end of an epoch'''
+        dice, iou, dice_pos, iou_pos, neg = meter.get_mean_metrics()
+        print('Loss: %0.4f | dice: %0.4f | IoU: %0.4f  | dice_pos: %0.4f | IoU_pos: %0.4f | dice&IoU_neg: %0.4f' % (
+            epoch_loss, dice, iou, dice_pos, iou_pos, neg))
+        self.scores[phase].append_metrics(dice, iou, dice_pos, iou_pos, neg)
+        self.losses[phase].append(epoch_loss)
+        torch.cuda.empty_cache()
+        return epoch_loss
 
     def predict(self, batch_size, num_workers, path='./input/test_images'):
         dataloader = DataLoader(
@@ -100,37 +132,6 @@ class ModelToolkit:
         print('saving model with name: "{}"'.format(file_name))
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
-
-    def run_epoch(self, phase):
-        meter = Meter()
-        start = time.strftime('%H:%M:%S')
-        print(f'Starting epoch: {self.epoch} | phase: {phase} | ⏰: {start}')
-        self.model.train(phase == 'train')
-        dataloader = self.dataloaders[phase]
-        running_loss = 0.0
-        total_batches = len(dataloader)
-        tk0 = tqdm(dataloader, total=total_batches)
-        self.optimizer.zero_grad()
-        for itr, batch in enumerate(tk0):
-            images, targets, images_id = batch
-            loss, outputs = self.forward(images, targets)
-            if phase == 'train':
-                loss.backward()
-                self.optimizer.step()
-                self.optimizer.zero_grad()
-            running_loss += loss.item()
-            outputs = outputs.detach().cpu()
-            meter.metrics(torch.sigmoid(outputs), targets)
-            tk0.set_postfix(loss=(running_loss / (itr + 1)))
-        epoch_loss = running_loss / total_batches
-        '''logging the metrics at the end of an epoch'''
-        dice, iou, dice_pos, iou_pos, neg = meter.get_mean_metrics()
-        print('Loss: %0.4f | dice: %0.4f | IoU: %0.4f  | dice_pos: %0.4f | IoU_pos: %0.4f | dice&IoU_neg: %0.4f' % (
-            epoch_loss, dice, iou, dice_pos, iou_pos, neg))
-        self.scores[phase].append_metrics(dice, iou, dice_pos, iou_pos, neg)
-        self.losses[phase].append(epoch_loss)
-        torch.cuda.empty_cache()
-        return epoch_loss
 
     def plot_scores(self):
         pl = 1

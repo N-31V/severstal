@@ -19,7 +19,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.model is None:
         model = smp.Unet('resnet18', encoder_weights='imagenet', classes=4, activation=None)
-        model = ModelToolkit(model, 'Unet(ResNet18)', num_workers=args.num_workers, batch_size=args.batch_size)
+        model = ModelToolkit(model, 'Unet(ResNet18)')
     else:
         model = load_model(args.model)
-    model.train(args.epochs)
+    model.train(args.epochs, args.batch_size, args.num_workers)
