@@ -12,7 +12,6 @@ from work_with_data import train_val_dataloader, SteelDataset, pmask_to_binary, 
 def load_model(model):
     with open(model, 'rb') as f:
         model = pickle.load(f)
-        model.set_device()
     return model
 
 
@@ -23,7 +22,15 @@ class ModelToolkit:
         self.name = name
         self.lr = 5e-4
         self.model = model
-        self.set_device()
+
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda:0')
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+            print(self.device, torch.cuda.get_device_name(0))
+        else:
+            self.device = torch.device('cpu')
+            print(self.device)
+        self.model = self.model.to(self.device)
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
@@ -34,16 +41,6 @@ class ModelToolkit:
         self.losses = {phase: [] for phase in ['train', 'val']}
         self.scores = {phase: Meter() for phase in ['train', 'val']}
         torch.backends.cudnn.benchmark = True
-
-    def set_device(self):
-        if torch.cuda.is_available():
-            self.device = torch.device('cuda:0')
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
-            print(self.device, torch.cuda.get_device_name(0))
-        else:
-            self.device = torch.device('cpu')
-            print(self.device)
-        self.model = self.model.to(self.device)
 
     def forward(self, images, targets):
         images = images.to(self.device)
