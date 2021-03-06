@@ -39,7 +39,7 @@ if __name__ == '__main__':
         val_losses.append(model.losses['val'])
         train_dice.append(model.scores['train'].dice_scores)
         val_dice.append(model.scores['val'].dice_scores)
-        print(model.name)
+        print(model.name, model.scores['val'].dice_scores[-1])
 
     compare_models(names, train_losses, 'train loss')
     compare_models(names, val_losses, 'val loss')
