@@ -32,7 +32,7 @@ class ModelToolkit:
             print(self.device)
         self.model = self.model.to(self.device)
 
-        self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([[[6]], [[20]], [[1]], [[9]]]))
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', patience=3,
                                                                     verbose=True)
