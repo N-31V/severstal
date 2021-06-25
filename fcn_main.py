@@ -2,7 +2,7 @@
 
 import argparse
 import torchvision
-from work_with_model import ModelToolkit, load_model
+from work_with_model2 import ModelToolkit, load_model
 
 
 def create_parser():
