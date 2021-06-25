@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from work_with_data import train_val_dataloader, SteelDataset, pmask_to_binary, mask_to_output
+from work_with_data2 import train_val_dataloader, SteelDataset, pmask_to_binary, mask_to_output
 
 
 def load_model(model):
@@ -32,7 +32,7 @@ class ModelToolkit:
             print(self.device)
         self.model = self.model.to(self.device)
 
-        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([[[6]], [[20]], [[1]], [[9]]]))
+        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([[[5.7]], [[20.8]], [[1]], [[6.4]]]))
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', patience=3,
                                                                     verbose=True)
@@ -51,8 +51,6 @@ class ModelToolkit:
 
     def train(self, num_epochs, batch_size, num_workers, ):
         dataloaders = train_val_dataloader(
-            data_folder='./input/train_images',
-            df_path='./input/train.csv',
             batch_size=batch_size,
             num_workers=num_workers,
         )
@@ -99,9 +97,9 @@ class ModelToolkit:
         torch.cuda.empty_cache()
         return epoch_loss
 
-    def predict(self, batch_size, num_workers, path='./input/test_images'):
+    def predict(self, batch_size, num_workers, path='./input/train_images'):
         dataloader = DataLoader(
-            SteelDataset(path),
+            SteelDataset(path, pd.read_csv('input/test_df.csv', index_col='img')),
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=True,
