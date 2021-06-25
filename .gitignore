@@ -1,0 +1,7 @@
+/__pycache__/
+/.ipynb_checkpoints/
+/.idea/
+/input/test_images/
+/input/train_images/
+/output/models/
+/output/predictions/
