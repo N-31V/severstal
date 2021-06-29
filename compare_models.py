@@ -9,7 +9,7 @@ from work_with_model import ModelToolkit, load_model
 
 def create_parser():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('-f', '--models_folder', type=str, required=True, help='model path')
+    argparser.add_argument('-f', '--models_folder', type=str, default='output/models', help='model path')
     return argparser
 
 

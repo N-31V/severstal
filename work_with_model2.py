@@ -97,7 +97,7 @@ class ModelToolkit:
         torch.cuda.empty_cache()
         return epoch_loss
 
-    def predict(self, batch_size, num_workers, path='./input/test_images'):
+    def predict(self, batch_size, num_workers, path='./input/train_images'):
         dataloader = DataLoader(
             SteelDataset(path, pd.read_csv('input/test_df.csv', index_col='img')),
             batch_size=batch_size,
