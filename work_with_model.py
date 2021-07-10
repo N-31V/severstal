@@ -18,7 +18,6 @@ def load_model(model):
 class ModelToolkit:
 
     def __init__(self, model, name):
-        self.model = model
         self.name = name
         self.lr = 5e-4
         self.model = model
